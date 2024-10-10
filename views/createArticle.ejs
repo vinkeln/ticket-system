@@ -1,0 +1,20 @@
+<%- include("header.ejs") %>
+
+<h1>Create New Article</h1>
+
+<!-- Använd samma struktur som knowledge-boxarna -->
+<div class="knowledge-base-container">
+    <div class="knowledge-box">
+        <form method="POST" action="/knowledge-base/create" class="form">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" id="title" name="title" required class="form-input" />
+
+            <label for="content" class="form-label">Content</label>
+            <textarea id="content" name="content" required class="form-input"></textarea>
+
+            <button type="submit" class="form-button">Create Article</button>
+        </form>
+    </div>
+</div>
+
+<%- include("footer.ejs") %>

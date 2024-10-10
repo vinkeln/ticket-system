@@ -1,0 +1,49 @@
+<%- include("header.ejs") %>
+
+<h1><%= ticket[0].title %></h1>
+<p><%= ticket[0].description %></p>
+<p><strong>Category:</strong> <%= ticket[0].category_name %></p>
+
+<% if (ticket[0].files) { %>
+    <a href="/uploads/<%= ticket[0].files %>">Download attached file</a>
+<% } %>
+
+<h2>Add a Comment</h2>
+<form method="POST" action="/ticket/<%= ticket[0].id %>/add-comment">
+    <textarea name="comment" placeholder="Add your comment..." required></textarea>
+    <button type="submit">Add Comment</button>
+</form>
+
+
+<!-- Visa agentens namn -->
+<% if (ticket[0].agent_name) { %>
+    <p><strong>Assigned Agent:</strong> <%= ticket[0].agent_name %></p>
+<% } else { %>
+    <p><strong>Assigned Agent:</strong> Not yet assigned</p>
+<% } %>
+
+<!-- Form för att uppdatera status -->
+<form method="POST" action="/ticket/<%= ticket[0].id %>/status">
+    <label for="status">Change Status:</label>
+    <select name="status" id="status">
+        <% statuses.forEach(function(status) { %>
+            <option value="<%= status.id %>" <%= ticket[0].status_id == status.id ? 'selected' : '' %>>
+                <%= status.name %>
+            </option>
+        <% }) %>
+    </select>
+    <button type="submit">Update Status</button>
+</form>
+
+<!-- Visa kommentarer och åtgärder -->
+<h2>Comments and Actions</h2>
+<% ticket.forEach(function(row) { %>
+    <% if (row.comment) { %>
+        <div>
+            <p><strong><%= row.commenter_name %></strong> commented on <%= row.comment_date %>:</p>
+            <p><%= row.comment %></p>
+        </div>
+    <% } %>
+<% }) %>
+
+<%- include("footer.ejs") %>

@@ -1,0 +1,9 @@
+<%- include("header.ejs") %>
+<h1>Create a Category</h1>
+<form method="POST" action="/categories/create">
+    <label for="name">Category Name</label>
+    <input type="text" name="name" id="name" required>
+    <button type="submit">Create Category</button>
+</form>
+
+<%- include("footer.ejs") %>

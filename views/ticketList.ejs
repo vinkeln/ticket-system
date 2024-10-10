@@ -1,0 +1,65 @@
+<%- include("header.ejs") %>
+<h1>Tickets List</h1>
+
+<div class="ticket-container">
+    <!-- Filtreringsalternativ -->
+    <form class="filter-form" method="GET" action="/tickets" id="filterForm">
+        <label for="category">Category:</label>
+        <select name="category" id="category" onchange="submitForm()">
+            <option value="">All</option>
+            <% categories.forEach(function(category) { %>
+                <option value="<%= category.id %>" <%= req.query.category == category.id ? 'selected' : '' %>><%= category.name %></option>
+            <% }) %>
+        </select>
+        
+        <label for="status">Status:</label>
+        <select name="status" id="status" onchange="submitForm()">
+            <option value="">All</option>
+            <% statuses.forEach(function(status) { %>
+                <option value="<%= status.id %>" <%= req.query.status == status.id ? 'selected' : '' %>><%= status.name %></option>
+            <% }) %>
+        </select>
+
+        <label for="description">Description:</label>
+        <input type="text" name="description" id="description" value="<%= req.query.description || '' %>" oninput="submitForm()">
+        
+        <!-- Lämna kvar knappen för att rensa filtren -->
+        <a href="/tickets" class="clear-btn">Clear Filters</a>
+    </form>
+
+    <!-- Tabell för biljetter -->
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Agent</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% tickets.forEach(function(ticket) { %>
+                <tr>
+                    <td><%= ticket.title %></td>
+                    <td><%= ticket.description %></td>
+                    <td><%= ticket.category_name %></td>
+                    <td><%= ticket.status_name %></td>
+                    <td><%= ticket.created_at %></td>
+                    <td><%= ticket.agent %></td>
+                    <td><a href="/ticket/<%= ticket.id %>">View</a></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function submitForm() {
+        document.getElementById('filterForm').submit(); // Automatisk form submission
+    }
+</script>
+
+<%- include("footer.ejs") %>

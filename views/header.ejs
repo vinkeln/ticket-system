@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticketing System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h1>Welcome to the Ticketing System</h1>
+    <nav>
+        <ul>
+            <% if (req.oidc.isAuthenticated()) { %>
+                <div class="auth-buttons">
+                    <!-- Visa användarens e-postadress -->
+                    <span class="user-email">User: <%= req.oidc.user.email %></span> 
+                    <a href="/profile" class="button">Profile</a>
+                    <a href="/logout" class="button">Logout</a>
+                </div>
+            <% } else { %>
+                <div class="auth-buttons">
+                    <a href="/login" class="button">Login</a>
+                </div>
+            <% } %>
+            
+            <li class="dropdown">
+                <button class="dropbtn">Menu</button>
+                <div class="dropdown-content">
+                    <a href="/tickets">Tickets</a>
+                    <a href="/">Create Ticket</a>
+                    <a href="/knowledge-base">Knowledge Base</a>
+                    <a href="/categories/create">Create Category</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</body>
+<div class="container">

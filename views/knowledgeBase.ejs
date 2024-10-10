@@ -1,0 +1,61 @@
+<%- include("header.ejs") %>
+
+<h1>Knowledge Base</h1>
+
+<!-- Sökformulär -->
+<form method="GET" action="/knowledge-base" class="form">
+    <label for="search" class="form-label">Search Articles</label>
+    <input type="text" name="search" placeholder="Search articles" class="form-input" />
+    <button type="submit" class="form-button">Search</button>
+</form>
+
+<!-- Länk för att skapa en ny artikel, visas endast för agenter -->
+<% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
+    <div style="text-align: right; margin-top: 20px;">
+        <a href="/knowledge-base/create" class="button">Create New Article</a>
+    </div>
+<% } %>
+
+
+
+<!-- Lista över artiklar utan länk på titeln -->
+<div class="knowledge-base-container">
+    <% articles.forEach(function(article) { %>
+        <div class="knowledge-box">
+            <h3><%= article.title %></h3> <!-- Titel utan länk -->
+            <p><%= article.content.substring(0, 100) %>...</p> <!-- Visar en kort sammanfattning -->
+
+            <!-- Ta bort-knapp för agenter -->
+            <% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
+                <form method="POST" action="/knowledge-base/<%= article.id %>/delete" style="display:inline;">
+                    <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this article?')">Delete</button>
+                </form>
+            <% } %>
+        </div>
+    <% }) %>
+</div>
+
+
+<!-- Existerande kunskapsboxar -->
+<div class="knowledge-base-container">
+    <div class="knowledge-box">
+        <h3>How do I create a ticket?</h3>
+        <p>Hover on the menu button in the top left corner. There you will see a text that says "Create Ticket". Click on the text and you will be redirected to a page where you can create a ticket. Fill in the title, description and choose a category. If you want to attach a file or image, you can do that as well. When you are done, click on the "Create Ticket" button.</p>
+        <a href="/">Read more</a>
+    </div>
+    
+    <div class="knowledge-box">
+        <h3>Where can I find the tickets?</h3>
+        <p>Hover on the menu button in the top left corner. There you will see a text that says "Ticket List". Click on the text and you will be redirected to a page where you can see all the tickets. You can also filter the tickets by category, status, and description. If you want to see more information about a ticket, click on the "View" button.</p>
+        <a href="/tickets">Read more</a>
+    </div>
+    
+    <div class="knowledge-box">
+        <h3>How do I create a category?</h3>
+        <p>Hover on the menu button in the top left corner. There you will see a text that says "Create Category". Click on the text and you will be redirected to a page where you can create a category. Fill in the name of the category and click on the "Create Category" button.</p>
+        <a href="/categories/create">Read more</a>
+    </div>
+</div>
+
+<%- include("footer.ejs") %>
+
