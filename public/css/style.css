@@ -1,0 +1,372 @@
+
+
+  /* Allmänna inställningar */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f7f6;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3 {
+  color: #333;
+  text-align: center;
+}
+
+/* Wrapper för att centrera innehållet */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+header {
+  background-color: #2b7a4b;
+  color: white;
+  padding: 20px 0;
+  text-align: center;
+}
+
+header nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+header nav ul li {
+  margin: 0 15px;
+}
+
+header nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+
+
+form label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+form input[type="text"],
+form textarea,
+form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+form button {
+  background-color: #2b7a4b;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+form button:hover {
+  background-color: #24873a;
+}
+
+/* Tabell för biljetter */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table th, table td {
+  padding: 15px;            /* Ge celler ordentlig padding */
+  text-align: left;          /* Justera text till vänster */
+  border: 1px solid #ddd;    /* Lägg till synlig border mellan celler */
+  vertical-align: middle;    /* Centrera text vertikalt */
+}
+
+/* Stil för rubriker */
+table th {
+  background-color: #2b7a4b; /* Grön bakgrund för rubriker */
+  color: white;              /* Vit textfärg för kontrast */
+  font-weight: bold;
+}
+
+/* Stil för rubriker */
+table th {
+  background-color: #2b7a4b; /* Grön bakgrund för rubriker */
+  color: white;              /* Vit textfärg för kontrast */
+  font-weight: bold;
+}
+
+table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Justera texten i actions-kolumnen */
+table td a {
+  text-decoration: none;
+  color: #2b7a4b;
+  font-weight: bold;
+}
+
+/* Style för action-länkar */
+table td a:hover {
+  text-decoration: underline;
+  color: #24873a;
+}
+
+/* Lägg till padding i botten av container */
+.container {
+  padding-bottom: 80px; /* Justera värdet för önskad mängd utrymme */
+}
+
+
+/* Footer */
+footer {
+  background-color: #2b7a4b;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+}
+
+footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Style The Dropdown Button */
+.dropbtn {
+  background-color: #2b7a4b;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  top:-50px; /* Justera avståndet från toppen */
+}
+
+/* Dropdown Content (Hidden by Default) */
+/* Stil för menyknappen */
+.dropbtn {
+  background-color: #2b7a4b; /* Samma bakgrundsfärg som de andra knapparna */
+  color: white;
+  padding: 20px 40px; /* Justera storlek så att den är större */
+  font-size: 20px; /* Gör texten något större */
+  font-weight: bold;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dropbtn:hover {
+  background-color: #24873a; /* Hover-effekt */
+}
+
+/* Style för dropdown */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 250px; /* Bredden på dropdownen */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  padding: 10px 0; /* Avstånd från innehållet till kanten */
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px; /* Öka padding för större klickytor */
+  font-size: 18px; /* Större textstorlek */
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+
+/* Visa dropdown när knappen är aktiv */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Ändra bakgrundsfärg på menyn när dropdownen visas */
+.dropdown:hover .dropbtn {
+  background-color: #24873a;
+}
+
+
+.knowledge-base-container {
+  display: flex;
+  flex-wrap: wrap; /* Lägg till detta för att hantera många boxar på rad */
+  justify-content: space-between; /* Skapar avstånd mellan boxarna */
+  gap: 20px; /* Mellanrum mellan boxarna */
+}
+
+.knowledge-box {
+  flex: 1; /* Alla boxar får lika stor bredd */
+  background-color: #f4f4f4; /* Lätt bakgrundsfärg för att göra boxarna tydliga */
+  padding: 20px;
+  margin: 10px 0; /* Avstånd mellan boxarna */
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.knowledge-box h3 {
+  margin-top: 0; /* Ta bort standardmarginalen ovanför rubriken */
+}
+
+.knowledge-box p {
+  line-height: 1.6; /* Skapar bättre läsbarhet för texten */
+}
+
+.knowledge-base-container {
+  display: flex;
+  flex-wrap: wrap; /* Lägg till detta för att hantera många boxar på rad */
+  justify-content: space-between;
+  gap: 20px;
+}
+
+
+/* Stil för knappar */
+.auth-buttons {
+  position: absolute;
+  top: 20px; /* Justera avståndet från toppen */
+  right: 20px; /* Justera avståndet från höger */
+  display: flex;
+  gap: 10px; /* Mellanrum mellan knapparna */
+}
+
+.auth-buttons .button {
+  background-color: #2b7a4b;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.auth-buttons .button:hover {
+  background-color: #24873a; /* Mörkare färg vid hover */
+}
+
+/* Wrapper för att hålla både tabellen och filtreringsformuläret bredvid varandra */
+.ticket-container {
+  display: flex;
+  justify-content: flex-start; /* Placera formuläret till vänster */
+  gap: 20px; /* Avstånd mellan tabellen och formuläret */
+  align-items: flex-start; /* Justera vertikalt så att de är på samma nivå */
+}
+
+.table {
+  flex: 3; /* Gör tabellen mycket större än formuläret */
+}
+
+/* Filtreringsformulär till vänster, bredare och kortare */
+.filter-form {
+flex: 1;
+background-color: #f4f7f6;
+padding: 15px;
+border-radius: 10px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+width: 250px; /* Gör formuläret lite bredare */
+height: auto; /* Anpassa höjden så att den inte blir för lång */
+margin-left: -150px; /* Flytta formuläret längre till vänster */
+}
+
+.filter-form label {
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.filter-form input,
+.filter-form select,
+.filter-form textarea {
+  width: 100%; /* Ändra bredden 120% av föräldrarelementet */
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box; /* se till att padding och border inte ökar bredden */
+}
+
+.filter-form button {
+  background-color: #2b7a4b;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.filter-form button:hover {
+  background-color: #24873a;
+}
+
+.clear-btn {
+  display: inline-block;
+  margin-top: 10px;
+  color: #2b7a4b;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.auth-buttons {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center; /* Justera text och knappar vertikalt */
+}
+
+.auth-buttons .user-email {
+  color: #333;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.auth-buttons .button {
+  background-color: #2b7a4b;
+  color: #eee;
+  padding: 10px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.auth-buttons .button:hover {
+  background-color: #24873a; /* Mörkare färg vid hover */
+}
+
+
+
+
+
+
