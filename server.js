@@ -323,6 +323,38 @@ app.get('/knowledge-base', async (req, res) => {
     res.render('knowledgeBase', { articles, req });
 });
 
+app.post('/ticket/:id/add-comment', async (req, res) => {
+    const ticketId = req.params.id;
+    const { comment } = req.body;
+    const userId = req.oidc.user.sub; // Hämta användarens ID (om du använder Auth0)
+
+    try {
+        const query = 'INSERT INTO comments (ticket_id, user_id, comment) VALUES (?, ?, ?)';
+        await db.query(query, [ticketId, userId, comment]);
+
+        res.redirect(`/ticket/${ticketId}`);
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).send('Error adding comment');
+    }
+});
+
+app.post('/ticket/:id/delete-comment', async (req, res) => {
+    const commentId = req.body.commentId;
+    const ticketId = req.params.id;
+
+    try {
+        const query = 'DELETE FROM comments WHERE id = ?';
+        await db.query(query, [commentId]);
+
+        res.redirect(`/ticket/${ticketId}`);
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).send('Error deleting comment');
+    }
+});
+
+
 
 // Starta servern
 app.listen(port, () => {

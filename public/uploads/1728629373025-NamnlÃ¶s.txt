@@ -1,0 +1,7 @@
+
+INSERT INTO lager (produkter_id, arbetare, struktur, lagersaldo, lagerhyllor) VALUES --vad vi säljer
+    (1, 1,"struktur1", 100, 1),
+    (2, 2, "struktur2", 200, 2),
+    (3, 3, "struktur3", 300, 3),
+    (4, 4, "struktur4", 400, 4),
+    (5, 5, "struktur5", 500, 5);
