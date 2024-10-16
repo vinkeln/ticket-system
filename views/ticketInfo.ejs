@@ -13,16 +13,21 @@
         <% } %>
     </div>
     
+
     <!-- Assigned Agent -->
     <div class="assigned-agent">
-        <p><strong>Assigned Agent:</strong> 
-            <% if (ticket[0].agent_name) { %>
-                <%= ticket[0].agent_name %>
-            <% } else { %>
-                Not yet assigned
-            <% } %>
-        </p>
+        <% if (!ticket[0].agent_name) { %>
+            <p><strong>Assigned Agent:</strong> Not yet assigned</p>
+            <!-- Testa att knappen alltid visas -->
+            <form method="POST" action="/ticket/<%= ticket[0].id %>/assign-agent" onsubmit="console.log('Submitting form to assign agent')">
+                <button type="submit">Take Responsibility</button>
+            </form>
+            
+        <% } %>
     </div>
+    
+    
+
 
     <!-- Status Update Form -->
     <form method="POST" action="/ticket/<%= ticket[0].id %>/status" class="status-form">
@@ -37,13 +42,21 @@
         <button type="submit" class="status-button">Update Status</button>
     </form>
     
-    <!-- Comments Section -->
     <div class="comments-section">
         <% ticket.forEach(function(row) { %>
             <% if (row.comment) { %>
                 <div class="comment">
-                    <p><strong><%= row.commenter_name %></strong> commented on <%= row.comment_date %>:</p>
+                    <p><strong><%= row.commenter_name || row.commenter_email %></strong> commented on <%= new Date(row.comment_date).toLocaleString('en-GB', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit',
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                    }) %>:</p>
                     <p><%= row.comment %></p>
+        
+                    <!--Delete form-->
                 </div>
             <% } %>
         <% }) %>

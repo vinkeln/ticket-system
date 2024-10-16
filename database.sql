@@ -19,6 +19,8 @@ CREATE TABLE users (
     role ENUM('user', 'agent', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE users MODIFY id VARCHAR(255);
+
 
 -- Status: Lagrar olika statusar för biljetter.
 CREATE TABLE status (
@@ -105,3 +107,7 @@ CREATE TABLE knowledge_base (
 );
 
 ALTER TABLE knowledge_base MODIFY agent_id VARCHAR(255);
+ALTER TABLE comments MODIFY user_id VARCHAR(255);
+ALTER TABLE tickets MODIFY agent_id VARCHAR(255);
+
+

@@ -148,6 +148,7 @@ app.get('/tickets', async (req, res) => {
         LEFT JOIN status ON tickets.status_id = status.id
         WHERE 1=1
     `;
+
     const queryParams = [];
 
     if (category) {
@@ -170,6 +171,7 @@ app.get('/tickets', async (req, res) => {
         query += ' AND tickets.created_at <= ?';
         queryParams.push(endDate);
     }
+    query += ' ORDER BY tickets.created_at DESC';
 
     try {
         // Hämta biljetterna och tillhörande kategorier och statusar
@@ -206,6 +208,32 @@ app.get('/ticket/:id', async (req, res) => {
     }
 });
 
+app.get('/ticket/:id', async (req, res) => {
+    const ticketId = req.params.id;
+
+    try {
+        const query = `
+            SELECT tickets.*, categories.name AS category_name, status.name AS status_name, users.name AS agent_name
+            FROM tickets
+            LEFT JOIN categories ON tickets.category_id = categories.id
+            LEFT JOIN status ON tickets.status_id = status.id
+            LEFT JOIN users ON tickets.agent_id = users.id
+            WHERE tickets.id = ?
+        `;
+        
+        const [ticket] = await db.query(query, [ticketId]);
+        const statuses = await getStatuses();
+
+        console.log(ticket); // Lägg till denna rad för att se vad som hämtas
+        res.render('ticketInfo', { ticket, statuses, req });
+    } catch (error) {
+        console.error('Error fetching ticket by ID:', error);
+        res.status(500).send('Error fetching ticket');
+    }
+});
+
+
+
 
 // Route för att uppdatera status på en biljett
 app.post('/ticket/:id/status', async (req, res) => {
@@ -222,8 +250,8 @@ app.post('/ticket/:id/status', async (req, res) => {
     }
 });
 
-
-app.get('/tickets', async (req, res) => {
+// kontrollera om denna behövs innan du tar bort
+/*app.get('/tickets', async (req, res) => {
     const { category, status, description, startDate, endDate } = req.query;
     let query = `
         SELECT tickets.*, categories.name AS category_name, status.name AS status_name
@@ -232,6 +260,7 @@ app.get('/tickets', async (req, res) => {
         LEFT JOIN status ON tickets.status_id = status.id
         WHERE 1=1
     `;
+    query += ' ORDER BY tickets.created_at DESC';
     const queryParams = [];
 
     if (category) {
@@ -267,7 +296,60 @@ app.get('/tickets', async (req, res) => {
         console.error('Error fetching tickets:', error);
         res.status(500).send('Error fetching tickets');
     }
+});*/
+
+app.get('/ticket/:id', async (req, res) => {
+    try {
+        const ticket = await getTicketById(req.params.id);
+        const statuses = await getStatuses();
+
+        // Logga användarens information för att se roller
+        console.log('Logged-in user:', req.oidc.user);
+
+        // Rendera sidan med biljetten och statusar
+        res.render('ticketInfo', { ticket, statuses, req });
+    } catch (error) {
+        console.error('Error fetching ticket by ID:', error);
+        res.status(500).send('Error fetching ticket');
+    }
 });
+
+
+// Route för att tilldela agent till biljett (Take Responsibility)
+app.post('/ticket/:id/assign-agent', async (req, res) => {
+    const ticketId = req.params.id;
+    const agentId = req.oidc.user.sub; // Hämta agentens Auth0 ID
+
+    // Logga ticketId och agentId för att säkerställa att de är korrekt ifyllda
+    console.log('Ticket ID:', ticketId);
+    console.log('Agent ID:', agentId);
+
+    try {
+        const query = 'UPDATE tickets SET agent_id = ? WHERE id = ?';
+        const [result] = await db.query(query, [agentId, ticketId]);
+
+        // Logga resultatet av SQL-uppdateringen för att se om den lyckades
+        console.log('Update result:', result);
+
+        res.redirect(`/ticket/${ticketId}`);
+    } catch (error) {
+        console.error('Error assigning agent to ticket:', error);
+        res.status(500).send('Error assigning agent to ticket');
+    }
+    console.log('Auth0 user object:', req.oidc.user);
+
+});
+
+app.use((req, res, next) => {
+    if (req.method === 'POST') {
+        console.log(`POST request to ${req.url}`);
+    }
+    next();
+});
+
+
+
+
 
 app.get('/categories/create', checkRole('agent'), async (req, res) => {
     res.render('createCategory', { req });
@@ -339,21 +421,29 @@ app.post('/ticket/:id/add-comment', async (req, res) => {
     }
 });
 
-app.post('/ticket/:id/delete-comment', async (req, res) => {
-    const commentId = req.body.commentId;
-    const ticketId = req.params.id;
+/*app.post('/ticket/:id/delete-comment', async (req, res) => {
+    const commentId = req.body.commentId;  // Kommer från hidden input i formuläret
+    const ticketId = req.params.id;  // Kommer från URL:en
+
+    console.log(`Comment ID to delete: ${commentId}`); // Kontrollera att rätt ID skickas
+    console.log(`Ticket ID: ${ticketId}`);  // Kontrollera att rätt ticket-id skickas
 
     try {
         const query = 'DELETE FROM comments WHERE id = ?';
-        await db.query(query, [commentId]);
+        const result = await db.query(query, [commentId]);
 
-        res.redirect(`/ticket/${ticketId}`);
+        if (result.affectedRows === 0) {
+            console.error(`Comment with ID ${commentId} not found`);
+            res.status(404).send('Comment not found');
+        } else {
+            console.log(`${result.affectedRows} comment(s) deleted`);
+            res.redirect(`/ticket/${ticketId}`);
+        }
     } catch (error) {
         console.error('Error deleting comment:', error);
         res.status(500).send('Error deleting comment');
     }
-});
-
+});*/
 
 
 // Starta servern

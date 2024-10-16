@@ -75,7 +75,8 @@ async function getTicketById(ticket_id) {
                c.comment, 
                c.created_at AS comment_date, 
                c.user_id AS commenter_id,
-               commenter.name AS commenter_name
+               commenter.name AS commenter_name,
+               commenter.email AS commenter_email 
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON t.id = ta.ticket_id
         LEFT JOIN users u ON ta.agent_id = u.id
