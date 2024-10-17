@@ -72,13 +72,19 @@ async function initializePool() {
     }
 };
 //middleware för att kontrollera användarroll
-const checkRole = (role) => (req, res, next) => {
+const checkRole = (allowedRoles) => (req, res, next) => {
+    if (!Array.isArray(allowedRoles)) {
+        return res.status(500).send('Roles must be an array'); // Kontrollera att allowedRoles är en array
+    }
+
     const userRoles = req.oidc.user['https://ticketsystem.com/roles'] || [];
-    if (userRoles.includes(role)) {
+    
+    if (allowedRoles.some(role => userRoles.includes(role))) {
         return next(); // Användaren har rätt roll, fortsätt
     }
     return res.status(403).send('Access denied'); // Användaren har inte rätt roll
 };
+
 
 
 // Anropa poolens initiering
@@ -114,7 +120,7 @@ app.get('/', async (req, res) => { // Hämta kategorier
 });
 
 // Route för att skapa en ny ticket och ladda upp en fil.
-app.post('/ticket', checkRole('user'), upload.single('file'), async (req, res) => {
+/*app.post('/ticket', checkRole('user'), upload.single('file'), async (req, res) => {
     // Hämta titel, beskrivning och kategori från formuläret
     const { title, description, category } = req.body;
 
@@ -135,17 +141,96 @@ app.post('/ticket', checkRole('user'), upload.single('file'), async (req, res) =
         console.error('Error creating ticket:', error);
         res.status(500).send('Error creating ticket');
     }
+});*/
+
+app.post('/ticket', checkRole(['user', 'agent']), upload.single('file'), async (req, res) => {
+    // Hämta titel, beskrivning och kategori från formuläret
+    const { title, description, category } = req.body;
+
+    // Kontrollera om en fil har bifogats, om inte, sätt filen till null
+    const file = req.file ? req.file.filename : null;
+
+    // Hämta användarens e-post (eller ID)
+    const userEmail = req.oidc.user.email;  // Om du vill spara e-post
+    const userId = req.oidc.user.sub;       // Om du vill spara Auth0-ID
+
+    try {
+        const teamId = await findTeamByCategory(category);
+
+        // Spara biljetten i databasen med användarens e-post eller ID
+        const query = `INSERT INTO tickets (title, description, category_id, files, user_id, team_id) 
+        VALUES (?, ?, ?, ?, ?, ?)`;
+        await db.query(query, [title, description, category, file, userEmail, teamId]);
+
+        // Omdirigera eller visa bekräftelse
+        res.redirect('/tickets'); // Ändra om du vill visa biljettens detaljer direkt
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        res.status(500).send('Error creating ticket');
+    }
 });
+
+
+// Funktion för att hitta teamet baserat på kategorin
+// ändrad av J.L
+async function findTeamByCategory(categoryId) {
+    const query = `
+        SELECT t.id AS team_id 
+        FROM categories c
+        LEFT JOIN teams t ON c.team_id = t.id
+        WHERE c.id = ?
+    `;
+
+    const [rows] = await db.query(query, [categoryId]);
+    
+    if (rows.length > 0 && rows[0].team_id) {
+        return rows[0].team_id;
+    } else {
+        // Om kategorin inte har ett team eller inte finns, sätt till 'Other' team_id
+        const [otherTeam] = await db.query("SELECT id FROM teams WHERE name = 'Other'");
+        return otherTeam[0].id;
+    }
+}
+
+
+// Route för att uppdatera en biljetts kategori och tillhörande team
+app.post('/ticket/:id/category', async (req, res) => {
+    const ticketId = req.params.id;
+    const categoryId = req.body.category; // Hämta kategori-ID från formuläret
+
+    try {
+        // Hitta teamet baserat på den nya kategorin
+        const teamId = await findTeamByCategory(categoryId);
+
+        // Uppdatera biljetten med den nya kategorin och teamet
+        await db.query('UPDATE tickets SET category_id = ?, team_id = ? WHERE id = ?', [categoryId, teamId, ticketId]);
+
+        // Omdirigera tillbaka till ticket-sidan eller där du vill visa den uppdaterade biljetten
+        res.redirect(`/ticket/${ticketId}`);
+    } catch (error) {
+        console.error('Error updating ticket category and team:', error);
+        res.status(500).send('Error updating ticket category and team');
+    }
+});
+
+
+
 
 
 // Route för att visa formuläret för att skapa en ny ticket
 app.get('/tickets', async (req, res) => {
     const { category, status, description, startDate, endDate } = req.query;
     let query = `
-        SELECT tickets.*, categories.name AS category_name, status.name AS status_name
+        SELECT tickets.*, 
+               categories.name AS category_name, 
+               status.name AS status_name, 
+               users.name AS agent_name, 
+               teams.name AS team_name
         FROM tickets
         LEFT JOIN categories ON tickets.category_id = categories.id
         LEFT JOIN status ON tickets.status_id = status.id
+        LEFT JOIN users ON tickets.agent_id = users.id
+        LEFT JOIN teams ON tickets.team_id = teams.id
         WHERE 1=1
     `;
 
@@ -195,20 +280,44 @@ app.get('/tickets', async (req, res) => {
     // Rendera ticketInfo.ejs med biljettens data och statusar
     res.render('ticketInfo', { ticket, statuses, req });
 });*/
+
 app.get('/ticket/:id', async (req, res) => {
     try {
-        const ticket = await getTicketById(req.params.id);
-        const statuses = await getStatuses();
+        const ticketId = req.params.id;
 
-        // Rendera ticketInfo.ejs med biljettens data, agent och kommentarer
-        res.render('ticketInfo', { ticket, statuses, req });
+        const query = `
+            SELECT tickets.*, 
+                   categories.name AS category_name, 
+                   status.name AS status_name, 
+                   ticket_user.email AS user_email, 
+                   ticket_user.name AS user_name, 
+                   teams.name AS team_name, 
+                   comments.comment, 
+                   comments.created_at AS comment_date, 
+                   comments.user_id AS commenter_email -- Vi använder user_id som nu är e-post
+            FROM tickets
+            LEFT JOIN categories ON tickets.category_id = categories.id
+            LEFT JOIN status ON tickets.status_id = status.id
+            LEFT JOIN users AS ticket_user ON tickets.user_id = ticket_user.id
+            LEFT JOIN teams ON tickets.team_id = teams.id
+            LEFT JOIN comments ON tickets.id = comments.ticket_id
+            WHERE tickets.id = ?
+        `;
+
+        const [ticket] = await db.query(query, [ticketId]);
+        const statuses = await getStatuses();
+        const categories = await getCategories();
+
+        console.log(ticket);  // Logga resultatet
+
+        res.render('ticketInfo', { ticket, statuses, categories, req });
     } catch (error) {
         console.error('Error fetching ticket by ID:', error);
         res.status(500).send('Error fetching ticket');
     }
 });
 
-app.get('/ticket/:id', async (req, res) => {
+/*app.get('/ticket/:id', async (req, res) => {
     const ticketId = req.params.id;
 
     try {
@@ -230,7 +339,25 @@ app.get('/ticket/:id', async (req, res) => {
         console.error('Error fetching ticket by ID:', error);
         res.status(500).send('Error fetching ticket');
     }
+});*/
+
+app.post('/ticket/:id/add-comment', async (req, res) => {
+    const ticketId = req.params.id;
+    const { comment } = req.body;
+    const userEmail = req.oidc.user.email; // Hämta inloggad användares e-post
+
+    try {
+        // Uppdatera query för att inkludera e-post istället för user_id
+        const query = 'INSERT INTO comments (ticket_id, user_id, comment, created_at) VALUES (?, ?, ?, NOW())';
+        await db.query(query, [ticketId, userEmail, comment]);
+
+        res.redirect(`/ticket/${ticketId}`);
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).send('Error adding comment');
+    }
 });
+
 
 
 
@@ -351,15 +478,22 @@ app.use((req, res, next) => {
 
 
 
-app.get('/categories/create', checkRole('agent'), async (req, res) => {
+app.get('/categories/create', checkRole(['agent']), async (req, res) => {
     res.render('createCategory', { req });
 });
 
-app.post('/categories/create', async (req, res) => {
+app.post('/categories/create', checkRole(['agent']), async (req, res) => {
     const { name } = req.body;
-    await createCategory(name);
-    res.redirect('/'); //startsidan
+
+    try {
+        await createCategory(name);
+        res.redirect('/'); // Omdirigera till startsidan efter att kategorin skapats
+    } catch (error) {
+        console.error('Error creating category:', error);
+        res.status(500).send('Error creating category');
+    }
 });
+
 
 
 app.get('/knowledge-base/create', (req, res) => {

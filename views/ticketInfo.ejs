@@ -4,6 +4,7 @@
     <!-- Ticket Title and Description -->
     <h1><%= ticket[0].title %></h1>
     <p><%= ticket[0].description %></p>
+    <p>Created by: <%= ticket[0].user_id || ticket[0].user_email %></p>
     
     <div class="ticket-meta">
         <p>Category: <%= ticket[0].category_name %></p>
@@ -46,7 +47,7 @@
         <% ticket.forEach(function(row) { %>
             <% if (row.comment) { %>
                 <div class="comment">
-                    <p><strong><%= row.commenter_name || row.commenter_email %></strong> commented on <%= new Date(row.comment_date).toLocaleString('en-GB', { 
+                    <p><strong><%= row.commenter_email %></strong> commented on <%= new Date(row.comment_date).toLocaleString('en-GB', {
                         year: 'numeric', 
                         month: 'short', 
                         day: 'numeric', 
@@ -55,21 +56,37 @@
                         second: '2-digit' 
                     }) %>:</p>
                     <p><%= row.comment %></p>
-        
-                    <!--Delete form-->
                 </div>
             <% } %>
         <% }) %>
     </div>
+    
+    
 
-    <!-- Add Comment Form -->
-    <div class="add-comment">
-        <h2>Add a Comment</h2>
-        <form method="POST" action="/ticket/<%= ticket[0].id %>/add-comment">
-            <textarea name="comment" placeholder="Add your comment..." required></textarea>
-            <button type="submit" class="comment-button">Add Comment</button>
-        </form>
+        <!-- Add Comment Form -->
+        <div class="add-comment">
+            <h3>Add a Comment</h3>
+            <form method="POST" action="/ticket/<%= ticket[0].id %>/add-comment">
+                <textarea name="comment" placeholder="Add your comment..." required></textarea>
+                <button type="submit" class="comment-button">Add Comment</button>
+            </form>
+        </div>
     </div>
-</div>
+
+    <form method="POST" action="/ticket/<%= ticket[0].id %>/category">
+        <label for="category">Select Category:</label>
+        <select name="category" id="category">
+            <% categories.forEach(function(category) { %>
+                <option value="<%= category.id %>" <%= ticket[0].category_id === category.id ? 'selected' : '' %>>
+                    <%= category.name %>
+                </option>
+            <% }) %>
+        </select>
+        <button type="submit">Update Category</button>
+    </form>
+
+    <div class="ticket-meta">
+        <p>Team responsible: <%= ticket[0].team_name || 'Other' %></p>
+    </div>
 
 <%- include("footer.ejs") %>

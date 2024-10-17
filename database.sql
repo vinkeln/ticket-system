@@ -40,6 +40,16 @@ CREATE TABLE categories (
     description TEXT
 );
 
+-- Koppla kategorin "Support" till "IT Support" teamet (team_id = 1)
+INSERT INTO categories (name, description, team_id) VALUES ('Support', 'General IT support category', 1);
+
+-- Koppla kategorin "HR Assistance" till "HR Support" teamet (team_id = 2)
+INSERT INTO categories (name, description, team_id) VALUES ('HR Assistance', 'Human resources support category', 2);
+
+-- Koppla kategorin "Finance Inquiry" till "Finance Support" teamet (team_id = 3)
+INSERT INTO categories (name, description, team_id) VALUES ('Finance Inquiry', 'Finance-related support category', 3);
+
+
 -- Tickets: Lagrar alla biljetter som skapas.
 CREATE TABLE tickets (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -106,8 +116,29 @@ CREATE TABLE knowledge_base (
     FOREIGN KEY (agent_id) REFERENCES users(id)
 );
 
+CREATE TABLE teams (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Lägg till standardvärden i teams-tabellen
+INSERT INTO teams (name) VALUES
+('IT Support'),
+('HR Support'),
+('Finance Support'),
+('Other');
+
+
 ALTER TABLE knowledge_base MODIFY agent_id VARCHAR(255);
 ALTER TABLE comments MODIFY user_id VARCHAR(255);
 ALTER TABLE tickets MODIFY agent_id VARCHAR(255);
+ALTER TABLE tickets ADD COLUMN team_id INT;
 
 
+ALTER TABLE categories ADD COLUMN team_id INT, 
+ADD CONSTRAINT fk_team_id FOREIGN KEY (team_id) REFERENCES teams(id);
+
+UPDATE categories SET team_id = 1 WHERE name = 'Software';  -- IT Support
+UPDATE categories SET team_id = 2 WHERE name = 'HR';  -- HR Support
+UPDATE categories SET team_id = 3 WHERE name = 'Finance';  -- Finance Support
+UPDATE categories SET team_id = 4 WHERE name = 'Other';  -- Other

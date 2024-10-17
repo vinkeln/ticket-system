@@ -36,7 +36,7 @@
                 <th>Category</th>
                 <th>Status</th>
                 <th>Created At</th>
-                <th>Agent</th>
+                <th>Team</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -48,12 +48,12 @@
                     <td><%= ticket.category_name %></td>
                     <td><%= ticket.status_name %></td>
                     <td><%= new Date(ticket.created_at).toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) %></td>
-                    <td><%= ticket.agent %></td>
+                    <td><%= ticket.team_name %></td> <!-- Visa Team här -->
                     <td><a href="/ticket/<%= ticket.id %>">View</a></td>
                 </tr>
             <% }) %>
         </tbody>
-    </table>
+    </table>    
 </div>
 
 <script>
