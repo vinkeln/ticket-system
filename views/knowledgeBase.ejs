@@ -16,14 +16,21 @@
     </div>
 <% } %>
 
-
-
-<!-- Lista över artiklar utan länk på titeln -->
+<!-- Lista över artiklar -->
 <div class="knowledge-base-container">
-    <% articles.forEach(function(article) { %>
+    <% articles.forEach(function(article, index) { %>
         <div class="knowledge-box">
-            <h3><%= article.title %></h3> <!-- Titel utan länk -->
-            <p><%= article.content.substring(0, 100) %>...</p> <!-- Visar en kort sammanfattning -->
+            <h3><%= article.title %></h3>
+            
+            <!-- Visar en kort sammanfattning av artikeln (100 tecken) -->
+            <p id="summary-<%= index %>"><%= article.content.substring(0, 100) %>...</p>
+            
+            <!-- Full artikeltext, gömd som standard -->
+            <p id="full-content-<%= index %>" style="display: none;"><%= article.content %></p>
+            
+            <!-- Read More/Read Less knapp -->
+            <button onclick="toggleContent('<%= index %>')" id="toggle-button-<%= index %>">Read More</button>
+
 
             <!-- Ta bort-knapp för agenter -->
             <% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
@@ -35,6 +42,28 @@
     <% }) %>
 </div>
 
+
+
+<script>
+    // JavaScript-funktion för att toggla mellan sammanfattning och hela innehållet
+    function toggleContent(index) {
+        const summary = document.getElementById(`summary-${index}`);
+        const fullContent = document.getElementById(`full-content-${index}`);
+        const toggleButton = document.getElementById(`toggle-button-${index}`);
+
+        if (fullContent.style.display === 'none') {
+            // Visa hela artikeln
+            summary.style.display = 'none'; // göm sammanfattningen
+            fullContent.style.display = 'block'; // visa hela artikeln
+            toggleButton.innerText = 'Read Less'; // ändra texten på knappen
+        } else {
+            // Göm hela artikeln och visa endast sammanfattningen
+            fullContent.style.display = 'none'; // göm hela artikeln
+            summary.style.display = 'block'; // visa sammanfattningen
+            toggleButton.innerText = 'Read More'; // återställ texten på knappen
+        }
+    }
+</script>
 
 <%- include("footer.ejs") %>
 

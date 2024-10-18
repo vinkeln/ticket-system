@@ -7,7 +7,7 @@ import { auth } from 'express-openid-connect';
 import dotenv from 'dotenv';
 dotenv.config();
 import nodemailer from 'nodemailer'; // ladda in mail
-import { getArticles, createArticle, deleteArticleById } from './src/knowledgeBase.js'; // Importera funktioner från knowledgeBase.js
+import { getArticles, createArticle, deleteArticleById, getArticleById } from './src/knowledgeBase.js'; // Importera funktioner från knowledgeBase.js
 import { getStatuses } from './src/status.js'; // Importera getStatuses
 
 const config = {
@@ -538,6 +538,19 @@ app.get('/knowledge-base', async (req, res) => {
     const articles = await getArticles(search);
     res.render('knowledgeBase', { articles, req });
 });
+
+app.get('/knowledge-base/:id', async (req, res) => {
+    const articleId = req.params.id;
+
+    try {
+        const article = await getArticleById(articleId); // Hämta artikeln baserat på dess ID
+        res.render('articleDetails', { article, req }); // Skicka artikeln till vyn
+    } catch (error) {
+        console.error('Error fetching article:', error);
+        res.status(500).send('Error fetching article');
+    }
+});
+
 
 app.post('/ticket/:id/add-comment', async (req, res) => {
     const ticketId = req.params.id;
