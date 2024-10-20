@@ -539,6 +539,7 @@ app.get('/knowledge-base', async (req, res) => {
     res.render('knowledgeBase', { articles, req });
 });
 
+
 app.get('/knowledge-base/:id', async (req, res) => {
     const articleId = req.params.id;
 

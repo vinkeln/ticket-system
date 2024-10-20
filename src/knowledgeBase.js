@@ -13,6 +13,7 @@ export async function getArticles(search = '') {
     return rows;
 }
 
+
 // Funktion för att hämta en specifik artikel baserat på dess ID
 export async function getArticleById(id) {
     const query = 'SELECT * FROM knowledge_base WHERE id = ?';

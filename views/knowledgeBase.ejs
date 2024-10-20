@@ -5,9 +5,14 @@
 <!-- Sökformulär -->
 <form method="GET" action="/knowledge-base" class="form">
     <label for="search" class="form-label">Search Articles</label>
-    <input type="text" name="search" placeholder="Search articles" class="form-input" />
+    <input type="text" name="search" placeholder="Search articles" class="form-input" value="<%= req.query.search || '' %>"/>
     <button type="submit" class="form-button">Search</button>
+
+    <!-- Nollställ sökningen med en knapp -->
+    <a href="/knowledge-base" class="form-button clear-btn">Clear Search</a>
 </form>
+
+
 
 <!-- Länk för att skapa en ny artikel, visas endast för agenter -->
 <% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
@@ -29,7 +34,8 @@
             <p id="full-content-<%= index %>" style="display: none;"><%= article.content %></p>
             
             <!-- Read More/Read Less knapp -->
-            <button onclick="toggleContent('<%= index %>')" id="toggle-button-<%= index %>">Read More</button>
+            <button class="toggle-btn" onclick="toggleContent('<%= index %>')" id="toggle-button-<%= index %>">Read More</button>
+
 
 
             <!-- Ta bort-knapp för agenter -->

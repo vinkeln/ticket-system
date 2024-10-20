@@ -494,6 +494,26 @@ margin-left: -150px; /* Flytta formuläret längre till vänster */
   cursor: pointer;
 }
 
+.toggle-btn {
+  background-color: #2b7a4b; /* Grön bakgrund */
+  color: white; /* Vit text */
+  padding: 5px 10px; /* Skapar en tydlig knapp med ordentlig padding */
+  border: none; /* Tar bort standardramen */
+  border-radius: 5px; /* Gör knappen rundade hörn */
+  font-size: 16px; /* Storleken på texten */
+  cursor: pointer; /* Ändrar pekaren till en hand vid hover */
+  transition: background-color 0.3s; /* Lägg till en övergång vid hover-effekten */
+}
+
+.toggle-btn:hover {
+  background-color: #24873a; /* Mörkare grön vid hover */
+}
+
+.toggle-btn:focus {
+  outline: none; /* Tar bort den blå standardkanten på fokus */
+}
+
+
 .delete-button:hover {
   background-color: #ff3333;
 }
@@ -524,6 +544,22 @@ margin-left: -150px; /* Flytta formuläret längre till vänster */
 .comment-button:hover {
   background-color: #24873a;
 }
+
+.clear-btn {
+  background-color: #2b7a4b; /* Röd bakgrundsfärg för nollställningsknappen */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: normal; /* Gör texten på knappen mindre tjock */
+  display: inline-block;
+  margin-left: 10px; /* Mellanrum mellan sökknappen och nollställningsknappen */
+}
+
+.clear-btn:hover {
+  background-color: #24873a /* Mörkare färg vid hover */
+}
+
 
 
 
