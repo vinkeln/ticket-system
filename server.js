@@ -9,6 +9,7 @@ dotenv.config();
 import nodemailer from 'nodemailer'; // ladda in mail
 import { getArticles, createArticle, deleteArticleById, getArticleById } from './src/knowledgeBase.js'; // Importera funktioner från knowledgeBase.js
 import { getStatuses } from './src/status.js'; // Importera getStatuses
+import { sendUpdateEmail } from './src/email.js'; // import sendUpdateEmail
 
 const config = {
     authRequired: true,
@@ -31,6 +32,24 @@ app.get('/profile', requiresAuth(), (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });*/
 
+// Definiera transporter för att skicka e-post via en SMTP-server
+export const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// Testa anslutningen (kan tas bort senare om det fungerar)
+transporter.verify(function(error, success) {
+    if (error) {
+        console.log('Error connecting to email server:', error);
+    } else {
+        console.log('Server is ready to take our messages');
+    }
+});
+
 
 app.use(express.static('public')); // Hanterar statiska filer (HTML, CSS, JS, bilder, etc)
 app.use(express.json()); // Hanterar HTTP POST request från klienten
@@ -41,6 +60,50 @@ app.use(auth(config));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename); // dirname är sökvägen till den nuvarande filen
 
+// Middleware för att kontrollera och tilldela roller
+app.use(async (req, res, next) => {
+    if (req.oidc.isAuthenticated()) {
+        const user = req.oidc.user;
+        const userRoles = user[`https://ticketsystem.com/roles`] || [];
+
+        if (userRoles.length === 0) {
+            const userId = user.sub;
+
+            try {
+                // Kontrollera om användaren redan har en roll i lokala databasen
+                const [results] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
+
+                if (results.length > 0) {
+                    res.locals.user = {
+                        email: user.email,
+                        role: results[0].role // Använd rollen från databasen
+                    };
+                    return next();
+                }
+
+                // Om ingen roll finns, tilldela "user" som standardroll
+                const insertRoleQuery = 'INSERT INTO users (id, email, role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE role = ?';
+                await db.query(insertRoleQuery, [userId, user.email, 'user', 'user']);
+                res.locals.user = { email: user.email, role: 'user' };
+                console.log('Default role "user" assigned successfully');
+                next();
+            } catch (error) {
+                console.error("Error checking or assigning roles:", error);
+                next(error);
+            }
+        } else {
+            // Om användaren har en roll i Auth0, använd den
+            const role = userRoles.includes('agent') ? 'agent' : 'user';
+            res.locals.user = { email: user.email, role: role };
+            next();
+        }
+    } else {
+        res.locals.user = null;
+        next();
+    }
+});
+
+
 app.set('view engine', 'ejs');
 app.set("views", path.join(__dirname, "views"));
 
@@ -50,9 +113,19 @@ const storage = multer.diskStorage({
         cb(null, 'public/uploads'); // Var filerna ska sparas
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Ger filerna unika namn med tidsstämpel
+        // Ta bort eller ersätt svenska bokstäver och specialtecken
+        const sanitizedFilename = file.originalname
+            .replace(/å/g, 'a')
+            .replace(/Å/g, 'A')
+            .replace(/ä/g, 'a')
+            .replace(/Ä/g, 'A')
+            .replace(/ö/g, 'o')
+            .replace(/Ö/g, 'O')
+            .replace(/[^\w\-\.]/g, ''); // Tar bort andra ogiltiga tecken
+        cb(null, `${Date.now()}-${sanitizedFilename}`);
     }
 });
+
 
 const upload = multer({ storage: storage });
 
@@ -71,19 +144,32 @@ async function initializePool() {
         console.error('Error connecting to the database:', error);
     }
 };
+
 //middleware för att kontrollera användarroll
-const checkRole = (allowedRoles) => (req, res, next) => {
-    if (!Array.isArray(allowedRoles)) {
-        return res.status(500).send('Roles must be an array'); // Kontrollera att allowedRoles är en array
+const checkRole = (...roles) => (req, res, next) => {
+    if (!req.oidc.isAuthenticated()) {
+        return res.status(401).render('accessDenied');
     }
 
-    const userRoles = req.oidc.user['https://ticketsystem.com/roles'] || [];
-    
-    if (allowedRoles.some(role => userRoles.includes(role))) {
-        return next(); // Användaren har rätt roll, fortsätt
+    const userRolesFromAuth0 = req.oidc.user[`https://ticketsystem.com/roles`] || [];
+    const userRoleFromDb = res.locals.user ? res.locals.user.role : null;
+
+    console.log('Auth0 roles:', userRolesFromAuth0);
+    console.log('Role from database:', userRoleFromDb);
+
+    const combinedRoles = new Set([...userRolesFromAuth0, userRoleFromDb]);
+
+    const hasRequiredRole = roles.some(role => combinedRoles.has(role));
+
+    if (hasRequiredRole) {
+        console.log('User has required role:', roles);
+        return next();
     }
-    return res.status(403).send('Access denied'); // Användaren har inte rätt roll
+
+    console.log('Access denied for roles:', roles);
+    return res.status(403).send('Access denied');
 };
+
 
 
 
@@ -104,6 +190,8 @@ app.get('/profile', (req, res) => {
     }
 });
 
+
+
 app.get('/logout', (req, res) => {
     res.oidc.logout();
 });
@@ -119,31 +207,8 @@ app.get('/', async (req, res) => { // Hämta kategorier
     res.render('index', { categories, req }); // Skicka kategorier och användarroll till vyn // userrole == agent
 });
 
-// Route för att skapa en ny ticket och ladda upp en fil.
-/*app.post('/ticket', checkRole('user'), upload.single('file'), async (req, res) => {
-    // Hämta titel, beskrivning och kategori från formuläret
-    const { title, description, category } = req.body;
 
-    // Kontrollera om en fil har bifogats, om inte, sätt filen till null
-    const file = req.file ? req.file.filename : null;
-
-    try {
-        // Skapa biljetten i databasen med titel, beskrivning, fil och kategori
-        const ticketId = await createTicket(title, description, file, category);
-
-        // Hämta den skapade biljetten för att visa på informationssidan
-        const ticket = await getTicketById(ticketId);
-        const statuses = await getStatuses();
-
-        // Rendera en vy för att visa bekräftelse eller biljettdetaljer
-        res.render('ticket', { ticket, statuses, req });
-    } catch (error) {
-        console.error('Error creating ticket:', error);
-        res.status(500).send('Error creating ticket');
-    }
-});*/
-
-app.post('/ticket', checkRole(['user', 'agent']), upload.single('file'), async (req, res) => {
+app.post('/ticket', checkRole('user', 'agent'), upload.single('file'), async (req, res) => {
     // Hämta titel, beskrivning och kategori från formuläret
     const { title, description, category } = req.body;
 
@@ -158,8 +223,8 @@ app.post('/ticket', checkRole(['user', 'agent']), upload.single('file'), async (
         const teamId = await findTeamByCategory(category);
 
         // Spara biljetten i databasen med användarens e-post eller ID
-        const query = `INSERT INTO tickets (title, description, category_id, files, user_id, team_id) 
-        VALUES (?, ?, ?, ?, ?, ?)`;
+        const query = `INSERT INTO tickets (title, description, category_id, files, user_id, team_id, is_viewed)    
+        VALUES (?, ?, ?, ?, ?, ?, 0)`;
         await db.query(query, [title, description, category, file, userEmail, teamId]);
 
         // Omdirigera eller visa bekräftelse
@@ -193,31 +258,6 @@ async function findTeamByCategory(categoryId) {
 }
 
 
-// Route för att uppdatera en biljetts kategori och tillhörande team
-app.post('/ticket/:id/category', async (req, res) => {
-    const ticketId = req.params.id;
-    const categoryId = req.body.category; // Hämta kategori-ID från formuläret
-
-    try {
-        // Hitta teamet baserat på den nya kategorin
-        const teamId = await findTeamByCategory(categoryId);
-
-        // Uppdatera biljetten med den nya kategorin och teamet
-        await db.query('UPDATE tickets SET category_id = ?, team_id = ? WHERE id = ?', [categoryId, teamId, ticketId]);
-
-        // Omdirigera tillbaka till ticket-sidan eller där du vill visa den uppdaterade biljetten
-        res.redirect(`/ticket/${ticketId}`);
-    } catch (error) {
-        console.error('Error updating ticket category and team:', error);
-        res.status(500).send('Error updating ticket category and team');
-    }
-});
-
-
-
-
-
-// Route för att visa formuläret för att skapa en ny ticket
 app.get('/tickets', async (req, res) => {
     const { category, status, description, startDate, endDate } = req.query;
     let query = `
@@ -225,7 +265,8 @@ app.get('/tickets', async (req, res) => {
                categories.name AS category_name, 
                status.name AS status_name, 
                users.name AS agent_name, 
-               teams.name AS team_name
+               teams.name AS team_name,
+               tickets.is_viewed
         FROM tickets
         LEFT JOIN categories ON tickets.category_id = categories.id
         LEFT JOIN status ON tickets.status_id = status.id
@@ -259,8 +300,8 @@ app.get('/tickets', async (req, res) => {
     query += ' ORDER BY tickets.created_at DESC';
 
     try {
-        // Hämta biljetterna och tillhörande kategorier och statusar
         const [tickets] = await db.query(query, queryParams);
+        console.log('Fetched tickets:', tickets); // Logga resultaten här
         const categories = await getCategories();
         const statuses = await getStatuses();
 
@@ -272,18 +313,13 @@ app.get('/tickets', async (req, res) => {
 });
 
 
-// Route för att visa en specifik ticket
-/*app.get('/ticket/:id', async (req, res) => {
-    const ticket = await getTicketById(req.params.id);
-    const statuses = await getStatuses();
-    console.log(statuses); 
-    // Rendera ticketInfo.ejs med biljettens data och statusar
-    res.render('ticketInfo', { ticket, statuses, req });
-});*/
-
 app.get('/ticket/:id', async (req, res) => {
+    const ticketId = req.params.id;
+
     try {
-        const ticketId = req.params.id;
+        // Försök att uppdatera biljetten till "sedd"
+        const updateResult = await db.query('UPDATE tickets SET is_viewed = 1 WHERE id = ?', [ticketId]);
+        console.log('Update result:', updateResult); // Kontrollera om uppdateringen lyckas
 
         const query = `
             SELECT tickets.*, 
@@ -294,7 +330,7 @@ app.get('/ticket/:id', async (req, res) => {
                    teams.name AS team_name, 
                    comments.comment, 
                    comments.created_at AS comment_date, 
-                   comments.user_id AS commenter_email -- Vi använder user_id som nu är e-post
+                   comments.user_id AS commenter_email
             FROM tickets
             LEFT JOIN categories ON tickets.category_id = categories.id
             LEFT JOIN status ON tickets.status_id = status.id
@@ -308,7 +344,7 @@ app.get('/ticket/:id', async (req, res) => {
         const statuses = await getStatuses();
         const categories = await getCategories();
 
-        console.log(ticket);  // Logga resultatet
+        console.log('Fetched ticket:', ticket); // Kontrollera om is_viewed hämtas korrekt
 
         res.render('ticketInfo', { ticket, statuses, categories, req });
     } catch (error) {
@@ -317,39 +353,23 @@ app.get('/ticket/:id', async (req, res) => {
     }
 });
 
-/*app.get('/ticket/:id', async (req, res) => {
-    const ticketId = req.params.id;
-
-    try {
-        const query = `
-            SELECT tickets.*, categories.name AS category_name, status.name AS status_name, users.name AS agent_name
-            FROM tickets
-            LEFT JOIN categories ON tickets.category_id = categories.id
-            LEFT JOIN status ON tickets.status_id = status.id
-            LEFT JOIN users ON tickets.agent_id = users.id
-            WHERE tickets.id = ?
-        `;
-        
-        const [ticket] = await db.query(query, [ticketId]);
-        const statuses = await getStatuses();
-
-        console.log(ticket); // Lägg till denna rad för att se vad som hämtas
-        res.render('ticketInfo', { ticket, statuses, req });
-    } catch (error) {
-        console.error('Error fetching ticket by ID:', error);
-        res.status(500).send('Error fetching ticket');
-    }
-});*/
-
 app.post('/ticket/:id/add-comment', async (req, res) => {
     const ticketId = req.params.id;
     const { comment } = req.body;
-    const userEmail = req.oidc.user.email; // Hämta inloggad användares e-post
+    const userEmail = req.oidc.user.email;
 
     try {
-        // Uppdatera query för att inkludera e-post istället för user_id
-        const query = 'INSERT INTO comments (ticket_id, user_id, comment, created_at) VALUES (?, ?, ?, NOW())';
-        await db.query(query, [ticketId, userEmail, comment]);
+        // Lägg till kommentaren
+        await db.query('INSERT INTO comments (ticket_id, user_id, comment, created_at) VALUES (?, ?, ?, NOW())', [ticketId, userEmail, comment]);
+
+        // Hämta användarens e-post som skapade biljetten
+        const [ticketOwner] = await db.query('SELECT user_id FROM tickets WHERE id = ?', [ticketId]);
+
+        // Skicka e-post
+        await sendUpdateEmail(ticketOwner[0].user_id, ticketId, 'commented');
+
+        // Uppdatera is_viewed
+        await db.query('UPDATE tickets SET is_viewed = 0 WHERE id = ?', [ticketId]);
 
         res.redirect(`/ticket/${ticketId}`);
     } catch (error) {
@@ -361,69 +381,55 @@ app.post('/ticket/:id/add-comment', async (req, res) => {
 
 
 
-
 // Route för att uppdatera status på en biljett
 app.post('/ticket/:id/status', async (req, res) => {
     const ticketId = req.params.id;
-    const { status } = req.body; // Hämta vald status från formuläret
+    const { status } = req.body;
 
     try {
-        // Uppdatera status för den specifika biljetten
-        await db.query('UPDATE tickets SET status_id = ? WHERE id = ?', [status, ticketId]);
-        res.redirect(`/ticket/${ticketId}`); // Omdirigera tillbaka till biljettsidan
+        // Uppdatera status
+        await db.query('UPDATE tickets SET status_id = ?, is_viewed = 0 WHERE id = ?', [status, ticketId]);
+
+        // Hämta användarens e-post som skapade biljetten
+        const [ticketOwner] = await db.query('SELECT user_id FROM tickets WHERE id = ?', [ticketId]);
+
+        // Skicka e-post
+        await sendUpdateEmail(ticketOwner[0].user_id, ticketId, 'status updated');
+
+        res.redirect(`/ticket/${ticketId}`);
     } catch (error) {
         console.error('Error updating status:', error);
         res.status(500).send('Error updating status');
     }
 });
 
-// kontrollera om denna behövs innan du tar bort
-/*app.get('/tickets', async (req, res) => {
-    const { category, status, description, startDate, endDate } = req.query;
-    let query = `
-        SELECT tickets.*, categories.name AS category_name, status.name AS status_name
-        FROM tickets
-        LEFT JOIN categories ON tickets.category_id = categories.id
-        LEFT JOIN status ON tickets.status_id = status.id
-        WHERE 1=1
-    `;
-    query += ' ORDER BY tickets.created_at DESC';
-    const queryParams = [];
 
-    if (category) {
-        query += ' AND tickets.category_id = ?';
-        queryParams.push(category);
-    }
-    if (status) {
-        query += ' AND tickets.status_id = ?';
-        queryParams.push(status);
-    }
-    if (description) {
-        query += ' AND tickets.description LIKE ?';
-        queryParams.push(`%${description}%`);
-    }
-    if (startDate) {
-        query += ' AND tickets.created_at >= ?';
-        queryParams.push(startDate);
-    }
-    if (endDate) {
-        query += ' AND tickets.created_at <= ?';
-        queryParams.push(endDate);
-    }
+
+// Route för att uppdatera en biljetts kategori och tillhörande team
+app.post('/ticket/:id/category', async (req, res) => {
+    const ticketId = req.params.id;
+    const categoryId = req.body.category;
 
     try {
-        // Hämta biljetterna
-        const [tickets] = await db.query(query, queryParams);
-        const categories = await getCategories(); // Hämta kategorier
-        const statuses = await getStatuses(); // Hämta statusar
+        const teamId = await findTeamByCategory(categoryId);
 
-        // Rendera ticketList.ejs med biljetter, kategorier och statusar
-        res.render('ticketList', { tickets, categories, statuses, req });
+        // Uppdatera biljetten med ny kategori och team
+        await db.query('UPDATE tickets SET category_id = ?, team_id = ?, is_viewed = 0 WHERE id = ?', [categoryId, teamId, ticketId]);
+
+        // Hämta användarens e-post som skapade biljetten
+        const [ticketOwner] = await db.query('SELECT user_id FROM tickets WHERE id = ?', [ticketId]);
+
+        // Skicka e-post
+        await sendUpdateEmail(ticketOwner[0].user_id, ticketId, 'category updated');
+
+        res.redirect(`/ticket/${ticketId}`);
     } catch (error) {
-        console.error('Error fetching tickets:', error);
-        res.status(500).send('Error fetching tickets');
+        console.error('Error updating ticket category and team:', error);
+        res.status(500).send('Error updating ticket category and team');
     }
-});*/
+});
+
+
 
 app.get('/ticket/:id', async (req, res) => {
     try {
@@ -474,15 +480,11 @@ app.use((req, res, next) => {
     next();
 });
 
-
-
-
-
-app.get('/categories/create', checkRole(['agent']), async (req, res) => {
+app.get('/categories/create', checkRole('agent'), async (req, res) => {
     res.render('createCategory', { req });
 });
 
-app.post('/categories/create', checkRole(['agent']), async (req, res) => {
+app.post('/categories/create', checkRole('agent'), async (req, res) => {
     const { name } = req.body;
 
     try {
@@ -496,7 +498,7 @@ app.post('/categories/create', checkRole(['agent']), async (req, res) => {
 
 
 
-app.get('/knowledge-base/create', (req, res) => {
+app.get('/knowledge-base/create', checkRole('agent'),(req, res) => {
     if (req.oidc.isAuthenticated() && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) {
         res.render('createArticle', { req }); // Skicka med req här
     } else {
@@ -552,46 +554,34 @@ app.get('/knowledge-base/:id', async (req, res) => {
     }
 });
 
+app.post('/switch-role', async (req, res) => {
+    const userId = req.oidc.user.sub;
+    const newRole = req.body.newRole;
+    console.log('Received role:', req.body.newRole); // Logga vilken roll som skickas från formuläret
 
-app.post('/ticket/:id/add-comment', async (req, res) => {
-    const ticketId = req.params.id;
-    const { comment } = req.body;
-    const userId = req.oidc.user.sub; // Hämta användarens ID (om du använder Auth0)
+
+    if (!['user', 'agent'].includes(newRole)) {
+        return res.status(400).send('Invalid role');
+    }
+
+    console.log(`Switching role for user ${userId} to ${newRole}`); // Logga användarens ID och nya roll
 
     try {
-        const query = 'INSERT INTO comments (ticket_id, user_id, comment) VALUES (?, ?, ?)';
-        await db.query(query, [ticketId, userId, comment]);
+        // Uppdatera användarens roll i databasen
+        const query = 'UPDATE users SET role = ? WHERE id = ?';
+        await db.query(query, [newRole, userId]);
 
-        res.redirect(`/ticket/${ticketId}`);
+        // Uppdatera res.locals.user så att ändringen reflekteras
+        res.locals.user = { email: req.oidc.user.email, role: newRole };
+        console.log('Updated user role:', res.locals.user); // Logga den uppdaterade rollen
+
+        res.redirect('/');
     } catch (error) {
-        console.error('Error adding comment:', error);
-        res.status(500).send('Error adding comment');
+        console.error('Error switching role:', error);
+        res.status(500).send('Error switching role');
     }
 });
 
-/*app.post('/ticket/:id/delete-comment', async (req, res) => {
-    const commentId = req.body.commentId;  // Kommer från hidden input i formuläret
-    const ticketId = req.params.id;  // Kommer från URL:en
-
-    console.log(`Comment ID to delete: ${commentId}`); // Kontrollera att rätt ID skickas
-    console.log(`Ticket ID: ${ticketId}`);  // Kontrollera att rätt ticket-id skickas
-
-    try {
-        const query = 'DELETE FROM comments WHERE id = ?';
-        const result = await db.query(query, [commentId]);
-
-        if (result.affectedRows === 0) {
-            console.error(`Comment with ID ${commentId} not found`);
-            res.status(404).send('Comment not found');
-        } else {
-            console.log(`${result.affectedRows} comment(s) deleted`);
-            res.redirect(`/ticket/${ticketId}`);
-        }
-    } catch (error) {
-        console.error('Error deleting comment:', error);
-        res.status(500).send('Error deleting comment');
-    }
-});*/
 
 
 // Starta servern

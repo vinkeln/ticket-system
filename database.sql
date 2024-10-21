@@ -68,6 +68,9 @@ CREATE TABLE tickets (
     FOREIGN KEY (agent_id) REFERENCES users(id)
 );
 
+UPDATE tickets SET category_id = ?, team_id = ?, is_viewed = 0 WHERE id = ?
+
+
 --Documents: Lagrar metadata för uppladdade filer (filnamn och sökväg).
 CREATE TABLE documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -128,11 +131,32 @@ INSERT INTO teams (name) VALUES
 ('Finance Support'),
 ('Other');
 
+-- Table for roles
+CREATE TABLE roles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Add roles to the roles table
+INSERT INTO roles (name) VALUES ('user'), ('agent'), ('admin');
+
+-- Pivot table to assign multiple roles to users
+CREATE TABLE user_roles (
+    user_id VARCHAR(255),
+    role_id INT,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+
 
 ALTER TABLE knowledge_base MODIFY agent_id VARCHAR(255);
 ALTER TABLE comments MODIFY user_id VARCHAR(255);
 ALTER TABLE tickets MODIFY agent_id VARCHAR(255);
 ALTER TABLE tickets ADD COLUMN team_id INT;
+ALTER TABLE tickets ADD COLUMN is_viewed BOOLEAN DEFAULT 0;
+
 
 
 ALTER TABLE categories ADD COLUMN team_id INT, 

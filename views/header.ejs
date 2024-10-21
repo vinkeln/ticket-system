@@ -34,5 +34,18 @@
             </li>
         </ul>
     </nav>
+    <!-- Lägg till en enkel dropdown eller knappar för att byta roll -->
+<form action="/switch-role" method="POST" class="role-switch-form">
+    <select name="newRole">
+        <option value="user">User</option>
+        <option value="agent">Agent</option>
+    </select>
+    <button type="submit" class="role-switch-button">Switch Role</button>
+</form>
+<div class="user-role">
+    <p>Current role: <%= user.role %></p>
+</div>
+
+
 </body>
 <div class="container">

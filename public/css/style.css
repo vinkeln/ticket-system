@@ -560,7 +560,38 @@ margin-left: -150px; /* Flytta formuläret längre till vänster */
   background-color: #24873a /* Mörkare färg vid hover */
 }
 
+.bold-ticket {
+  font-weight: bold;
+}
 
+.role-switch-form {
+  margin: 20px 0;
+}
+
+.role-select {
+  padding: 5px;
+  font-size: 16px;
+}
+
+.role-switch-button {
+  padding: 8px 12px;
+  background-color: #2b7a4b;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.role-switch-button:hover {
+  background-color: #24873a;
+}
+
+.role-switch-form {
+    width: 300px; /* Begränsar bredden på formuläret */
+    margin: 2px; /* Centrerar formuläret horisontellt */
+    border: 1px solid #ccc; /* Lägger till en kantlinje runt formuläret */
+    border-radius: 8px; /* Gör hörnen lite rundade */
+    background-color: #f9f9f9; /* Ljus bakgrundsfärg */
+}
 
 
 

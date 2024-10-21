@@ -12,10 +12,8 @@
     <a href="/knowledge-base" class="form-button clear-btn">Clear Search</a>
 </form>
 
-
-
 <!-- Länk för att skapa en ny artikel, visas endast för agenter -->
-<% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
+<% if ((req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) || (user && user.role === 'agent')) { %>
     <div style="text-align: right; margin-top: 20px;">
         <a href="/knowledge-base/create" class="button">Create New Article</a>
     </div>
@@ -36,10 +34,8 @@
             <!-- Read More/Read Less knapp -->
             <button class="toggle-btn" onclick="toggleContent('<%= index %>')" id="toggle-button-<%= index %>">Read More</button>
 
-
-
             <!-- Ta bort-knapp för agenter -->
-            <% if (req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) { %>
+            <% if ((req.oidc.user && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) || (user && user.role === 'agent')) { %>
                 <form method="POST" action="/knowledge-base/<%= article.id %>/delete" style="display:inline;">
                     <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this article?')">Delete</button>
                 </form>
@@ -47,8 +43,6 @@
         </div>
     <% }) %>
 </div>
-
-
 
 <script>
     // JavaScript-funktion för att toggla mellan sammanfattning och hela innehållet
@@ -72,4 +66,3 @@
 </script>
 
 <%- include("footer.ejs") %>
-
