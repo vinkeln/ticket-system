@@ -138,5 +138,7 @@ async function getTicketById(ticket_id) {
         return rows;
     }
 
+    
+
 
 export { createTicket, getTicketById, classifyTicket, createCategory, getCategories, getStatuses, getFilteredTickets };
