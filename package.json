@@ -4,7 +4,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --exit",
     "start": "node server.js"
   },
   "keywords": [],
@@ -20,5 +20,11 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.11.3",
     "nodemailer": "^6.9.15"
+  },
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "mocha": "^10.7.3",
+    "sinon": "^19.0.2",
+    "supertest": "^7.0.0"
   }
 }
