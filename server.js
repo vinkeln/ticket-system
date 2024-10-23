@@ -10,20 +10,23 @@ import nodemailer from 'nodemailer'; // ladda in mail
 import { getArticles, createArticle, deleteArticleById, getArticleById } from './src/knowledgeBase.js'; // Importera funktioner från knowledgeBase.js
 import { getStatuses } from './src/status.js'; // Importera getStatuses
 import { sendUpdateEmail } from './src/email.js'; // import sendUpdateEmail
+const app = express(); // Initialize the express app
+const port = 3000; // Port to run the server on
+
 
 const config = {
     authRequired: true,
     auth0Logout: true,
-    secret: process.env.SECRET, // Använd en säker hemlighet
-    baseURL: 'http://localhost:3000',
-    clientID: 'cWTRgbAwfmZxqafWuBzg8FFTI8q2Ujvj',
-    issuerBaseURL: 'https://dev-juq4f4z7tsy1kegn.us.auth0.com'
+    secret: process.env.SECRET, // Hämta hemligheten från .env
+    baseURL: process.env.BASEURL, // Hämta baseURL från .env
+    clientID: process.env.CLIENTID, // Hämta clientID från .env
+    issuerBaseURL: process.env.ISSURER // Hämta issuerBaseURL från .env
 };
+
 import { fileURLToPath } from 'url';
 import { createTicket, getTicketById, classifyTicket, createCategory, getCategories} from './src/createTicket.js'; // Importera funktioner från createTicket.js
 
-const app = express(); // Initialize the express app
-const port = 3000; // Port to run the server on
+
 
 // profile to auth0
 /*const { requiresAuth } = require('express-openid-connect');
@@ -498,13 +501,46 @@ app.post('/categories/create', checkRole('agent'), async (req, res) => {
 
 
 
-app.get('/knowledge-base/create', checkRole('agent'),(req, res) => {
+/*app.get('/knowledge-base/create', checkRole('agent'),(req, res) => {
     if (req.oidc.isAuthenticated() && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) {
         res.render('createArticle', { req }); // Skicka med req här
     } else {
         res.status(403).send('Access denied'); // Endast agenter kan skapa artiklar
     }
+});*/
+
+app.get('/knowledge-base/create', checkRole('agent'), async (req, res) => {
+    try {
+        // Kontrollera om användaren är autentiserad via Auth0
+        if (req.oidc.isAuthenticated()) {
+            // Hämta roller från Auth0
+            const auth0Roles = req.oidc.user['https://ticketsystem.com/roles'] || [];
+
+            // Kontrollera om användaren har rollen 'agent' via Auth0
+            if (auth0Roles.includes('agent')) {
+                return res.render('createArticle', { req });
+            }
+
+            // Om användaren inte har rollen via Auth0, kontrollera databasen
+            const [results] = await db.query('SELECT role FROM users WHERE id = ?', [req.oidc.user.sub]);
+            
+            // Om användarens roll är 'agent' i databasen
+            if (results.length > 0 && results[0].role === 'agent') {
+                return res.render('createArticle', { req });
+            }
+
+            // Om ingen av källorna (Auth0 eller databasen) har agentrollen, neka åtkomst
+            res.status(403).send('Access denied');
+        } else {
+            // Om användaren inte är inloggad, neka åtkomst
+            res.status(401).send('You need to be authenticated to access this resource');
+        }
+    } catch (error) {
+        console.error('Error checking roles or database:', error);
+        res.status(500).send('Internal server error');
+    }
 });
+
 
 
 // Route för att hantera inskickad artikeldata
@@ -583,8 +619,9 @@ app.post('/switch-role', async (req, res) => {
 });
 
 
-
 // Starta servern
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
+export default app;
