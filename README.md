@@ -36,7 +36,8 @@ AUTH0_CALLBACK_URL=http://localhost:1337/callback
 
 AUTH0_SECRET=your-auth0-secret
 
-SESSION_SECRET=your-session-secret
+SESSION_SECRET=your-session-secret![Skärmbild 2024-10-25 220422](https://github.com/user-attachments/assets/20be6276-3050-4dcb-9ad0-d71c449015d6)
+
 
 ### How to get these keys
 Auth0 keys:
