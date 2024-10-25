@@ -4,6 +4,8 @@
 This is a simple ticketing system where users can create tickets, attach files, and assign categories. Agents can manage the tickets, assign categories, and track the status of the tickets.
 There is also a knowledge base where both customers and agents can search for articles.
 
+![Skärmbild 2024-10-25 220422](https://github.com/user-attachments/assets/20be6276-3050-4dcb-9ad0-d71c449015d6)
+
 ## Features
 - Create tickets with descriptions of issues.
 - Upload and attach files to tickets.
@@ -36,7 +38,7 @@ AUTH0_CALLBACK_URL=http://localhost:1337/callback
 
 AUTH0_SECRET=your-auth0-secret
 
-SESSION_SECRET=your-session-secret![Skärmbild 2024-10-25 220422](https://github.com/user-attachments/assets/20be6276-3050-4dcb-9ad0-d71c449015d6)
+SESSION_SECRET=your-session-secret
 
 
 ### How to get these keys
