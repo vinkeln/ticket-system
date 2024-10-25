@@ -75,6 +75,15 @@ ISSURER=<your_issuer>
 EMAIL_USER=<your_email>
 EMAIL_PASS=<your_email_password>
 
+## If you need to change your host in json
+Go to config/credentials.json
+change:
+"host":"Your-laptop.local",
+    "user": "you",
+    "password": "P@ssw0rd",
+    "database": "ticketsystem",
+    "multipleStatements": true
+
 ## Extra: Add switch user/agent form
 go to header.ejs
 remove comment <!--Add dropdown menu for switching roles ->
