@@ -17,8 +17,36 @@ There is also a knowledge base where both customers and agents can search for ar
 
 ## Requirements
 - Node.js
-- MySQL
+- npm (Node package Manager)
+- MySQL/MariaDB
 - Express.js
+- Git (clone repository)
+
+## Require keys and .env File setup
+Create an .env file in the root directory with the following keys:
+AUTH0_DOMAIN=your-auth0-domain
+
+AUTH0_BASE_URL=http://localhost:1337
+
+AUTH0_CLIENT_ID=your-auth0-client-id
+
+AUTH0_CLIENT_SECRET=your-auth0-client-secret
+
+AUTH0_CALLBACK_URL=http://localhost:1337/callback
+
+AUTH0_SECRET=your-auth0-secret
+
+SESSION_SECRET=your-session-secret
+
+### How to get these keys
+Auth0 keys:
+   You can get your AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, and AUTH0_SECRET by signing up at Auth0 and creating a new application.
+   Make sure to configure the callback URL in your Auth0 settings to match your local setup (e.g., http://localhost:1337/callback).
+
+   Session Secret:
+
+SESSION_SECRET is a random string used for securing session cookies. Make sure it is a long, random string.
+
 
 ## Installation
 1. Clone the repository:
@@ -29,15 +57,12 @@ cd ticket-system
 
 npm install
 
-
 ## Start server
 node server.js
 
 ## Test
 npm install mocha chai sinon --save-dev
 npm test
-
-
 
 ## Add .env file
 SECRET=<your_secret>
@@ -46,6 +71,10 @@ CLIENTID=<your_client_id>
 ISSURER=<your_issuer>
 EMAIL_USER=<your_email>
 EMAIL_PASS=<your_email_password>
+
+## Extra: Add switch user/agent form
+go to header.ejs
+remove comment <!--Add dropdown menu for switching roles ->
 
 ## License
 MIT License
