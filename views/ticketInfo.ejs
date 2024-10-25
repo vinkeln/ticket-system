@@ -3,7 +3,7 @@
 <div class="ticket-details">
     <!-- Ticket Title and Description -->
     <h1><%= ticket[0].title %></h1>
-    <p><%= ticket[0].description %></p>
+    <p><b><%= ticket[0].description %></b></p>
     <p>Created by: <%= ticket[0].user_id || ticket[0].user_email %></p>
     
     <div class="ticket-meta">
@@ -15,7 +15,7 @@
     </div>
     
 
-    <!-- Assigned Agent -->
+    <!-- Start this if you want to change user/agent faster -->
       <!-- <div class="assigned-agent">
         <% if (!ticket[0].agent_name) { %>
             <p><strong>Assigned Agent:</strong> Not yet assigned</p>

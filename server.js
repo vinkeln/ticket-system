@@ -27,14 +27,6 @@ import { fileURLToPath } from 'url';
 import { createTicket, getTicketById, classifyTicket, createCategory, getCategories} from './src/createTicket.js'; // Importera funktioner från createTicket.js
 
 
-
-// profile to auth0
-/*const { requiresAuth } = require('express-openid-connect');
-
-app.get('/profile', requiresAuth(), (req, res) => {
-  res.send(JSON.stringify(req.oidc.user));
-});*/
-
 // Definiera transporter för att skicka e-post via en SMTP-server
 export const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -500,14 +492,6 @@ app.post('/categories/create', checkRole('agent'), async (req, res) => {
 });
 
 
-
-/*app.get('/knowledge-base/create', checkRole('agent'),(req, res) => {
-    if (req.oidc.isAuthenticated() && req.oidc.user['https://ticketsystem.com/roles'].includes('agent')) {
-        res.render('createArticle', { req }); // Skicka med req här
-    } else {
-        res.status(403).send('Access denied'); // Endast agenter kan skapa artiklar
-    }
-});*/
 
 app.get('/knowledge-base/create', checkRole('agent'), async (req, res) => {
     try {

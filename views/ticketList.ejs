@@ -21,11 +21,30 @@
         </select>
 
         <label for="description">Description:</label>
-        <input type="text" name="description" id="description" value="<%= req.query.description || '' %>" oninput="submitForm()">
-        
-        <!-- Lämna kvar knappen för att rensa filtren -->
-        <a href="/tickets" class="clear-btn">Clear Filters</a>
+        <input type="text" name="description" id="description" value="<%= req.query.description || '' %>" oninput="debouncedSubmitForm()">
+
     </form>
+
+    <script>
+        function submitForm() {
+            document.getElementById('filterForm').submit();
+        }
+    
+        // Debounce-funktion som bara triggar inlämning efter att användaren slutat skriva i 300ms
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+    
+        // Skapa en debounced version av submitForm
+        const debouncedSubmitForm = debounce(submitForm, 300);
+    </script>
+    
 
     <!-- Tabell för biljetter -->
     <table>
@@ -53,11 +72,10 @@
                         <td><%= ticket.category_name %></td>
                         <td><%= ticket.status_name %></td>
                         <td><%= new Date(ticket.created_at).toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) %></td>
-                        <td><%= new Date(ticket).toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) %></td>
+                        <td><%= new Date(ticket.updated_at).toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) %></td>
                         <td><%= ticket.team_name %></td>
                         <td><a href="/ticket/<%= ticket.id %>">View</a></td>
                     </tr>
-                    
                 <% }) %>
             </tbody>
             
